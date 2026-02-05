@@ -1,0 +1,119 @@
+# Planning Guide
+
+An interactive jigsaw puzzle application where users can drag puzzle pieces and snap them together to complete a picture.
+
+**Experience Qualities**: 
+1. **Tactile** - Dragging and snapping pieces should feel physically satisfying with smooth animations and magnetic feedback
+2. **Playful** - The interface should be fun and engaging with delightful interactions that make puzzle-solving enjoyable
+3. **Focused** - Clean, uncluttered workspace that keeps attention on the puzzle itself
+
+**Complexity Level**: Light Application (multiple features with basic state)
+This is a focused interactive tool with drag-and-drop functionality, collision detection, and state management for piece positions, but doesn't require complex routing or backend integration.
+
+## Essential Features
+
+### Puzzle Piece Dragging
+- **Functionality**: Click and drag individual puzzle pieces around the canvas
+- **Purpose**: Core interaction for manipulating puzzle pieces to solve the puzzle
+- **Trigger**: Mouse down on a puzzle piece
+- **Progression**: Mouse down on piece → piece lifts (z-index increase) → piece follows cursor → mouse up → piece drops
+- **Success criteria**: Pieces move smoothly with cursor, no lag, piece stays under cursor during drag
+
+### Snap-to-Connect
+- **Functionality**: When pieces are dragged close to their correct neighboring pieces, they snap together automatically
+- **Purpose**: Provides satisfying feedback and helps users connect pieces accurately
+- **Trigger**: Dragging a piece within snap threshold distance of a compatible adjacent piece
+- **Progression**: Piece approaches neighbor → distance check → snap animation → pieces lock together → move as unit
+- **Success criteria**: Snapping feels magnetic and satisfying, connected pieces move together as one unit
+
+### Puzzle Generation
+- **Functionality**: Generate a puzzle from an image by dividing it into grid pieces
+- **Purpose**: Create the actual puzzle pieces with proper interlocking shapes
+- **Trigger**: App initialization
+- **Progression**: Load image → divide into grid → apply jigsaw cutouts → randomize positions → render pieces
+- **Success criteria**: Pieces have classic jigsaw shapes, properly tessellate when connected
+
+### Group Movement
+- **Functionality**: When pieces are connected, dragging one piece moves the entire connected group
+- **Purpose**: Allows building sub-sections of the puzzle before connecting them
+- **Trigger**: Dragging any piece that's part of a connected group
+- **Progression**: Select piece → detect connected pieces → move entire group together → snap check for whole group
+- **Success criteria**: All connected pieces move in unison, maintain relative positions
+
+## Edge Case Handling
+
+- **Overlapping pieces**: Clicking on overlapping pieces selects the topmost piece
+- **Rapid dragging**: Throttle snap detection to prevent performance issues with fast movements
+- **Already connected**: Prevent re-snapping of already connected pieces
+- **Edge pieces**: Handle pieces at puzzle boundaries that don't have neighbors on all sides
+- **Completed puzzle**: Detect when all pieces are connected and show completion state
+
+## Design Direction
+
+The design should evoke a sense of calm focus and tactile satisfaction, like working on a physical puzzle on a wooden table. The interface should feel warm, natural, and inviting while maintaining a clean workspace that doesn't compete with the puzzle itself.
+
+## Color Selection
+
+A warm, natural palette inspired by crafted wooden puzzle boards and cozy indoor activities.
+
+- **Primary Color**: Rich Walnut Brown (oklch(0.45 0.06 60)) - Communicates warmth and natural materials, grounding the interface
+- **Secondary Colors**: 
+  - Soft Cream (oklch(0.95 0.02 80)) - Canvas background, provides gentle contrast without harshness
+  - Warm Sage (oklch(0.65 0.05 140)) - Subtle accents for UI controls
+- **Accent Color**: Burnt Sienna (oklch(0.55 0.15 45)) - Attention-grabbing for completion celebrations and active states
+- **Foreground/Background Pairings**:
+  - Primary on Cream (oklch(0.45 0.06 60) on oklch(0.95 0.02 80)) - Ratio 7.2:1 ✓
+  - Accent on Cream (oklch(0.55 0.15 45) on oklch(0.95 0.02 80)) - Ratio 5.1:1 ✓
+  - Foreground on Background (oklch(0.25 0.01 60) on oklch(0.95 0.02 80)) - Ratio 12.5:1 ✓
+
+## Font Selection
+
+Typography should feel friendly and approachable yet clear, with a slight organic quality that complements the puzzle experience without being overly playful.
+
+- **Typographic Hierarchy**: 
+  - H1 (App Title): Space Grotesk Bold/32px/tight tracking for distinctive character
+  - UI Controls: Space Grotesk Medium/14px/normal tracking for clarity
+  - Completion Message: Space Grotesk Bold/24px/relaxed tracking for celebration
+
+## Animations
+
+Animations should emphasize the physical, tactile nature of puzzle pieces with smooth organic movement and satisfying snapping.
+
+- **Piece Lift**: Subtle scale up (1.05x) and shadow increase when grabbed, 150ms ease-out
+- **Snap Animation**: Quick spring animation (200ms) when pieces connect with slight overshoot for satisfaction
+- **Group Movement**: Smooth dragging with subtle momentum on release, 300ms ease-out
+- **Completion**: Celebratory scale pulse and confetti effect when puzzle completes
+
+## Component Selection
+
+- **Components**: 
+  - Card for puzzle workspace with subtle shadow and rounded corners
+  - Button for controls (shuffle, reset) with hover states using Warm Sage
+  - Dialog for completion celebration with backdrop blur
+  - Progress indicator showing percentage complete
+  
+- **Customizations**: 
+  - Custom SVG puzzle pieces with proper interlocking paths
+  - Custom drag-and-drop system using Framer Motion for smooth physics
+  - Custom snap detection using distance calculations
+  
+- **States**: 
+  - Puzzle pieces: idle (default shadow), grabbed (lifted with larger shadow), snapped (locked position)
+  - Buttons: default (Warm Sage), hover (darker sage), active (pressed inset)
+  - Completion dialog: hidden, visible with backdrop
+  
+- **Icon Selection**: 
+  - Shuffle (ArrowsClockwise) for randomizing pieces
+  - ArrowCounterClockwise for reset
+  - CheckCircle for completion indicator
+  
+- **Spacing**: 
+  - Puzzle workspace: p-8 for breathing room around pieces
+  - Controls: gap-4 between buttons, mt-6 from workspace
+  - Piece snap threshold: 30px detection radius
+  
+- **Mobile**: 
+  - Touch-friendly piece sizes (minimum 80px)
+  - Simplified controls with larger tap targets (min 44px)
+  - Fewer pieces on mobile (3x3 vs 4x4 grid)
+  - Stack controls vertically on narrow screens
