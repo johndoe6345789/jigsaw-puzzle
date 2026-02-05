@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Toaster } from '@/components/ui/sonner'
-import { ArrowsClockwise, ArrowCounterClockwise, CheckCircle } from '@phosphor-icons/react'
+import { ArrowsClockwise, ArrowCounterClockwise, CheckCircle, Sparkle } from '@phosphor-icons/react'
 import { PuzzlePiece as PuzzlePieceType } from '@/lib/types'
 import { 
   initializePuzzle, 
@@ -48,8 +48,11 @@ function App() {
   const [isComplete, setIsComplete] = useKV<boolean>('puzzle-complete', false)
   const [showCompletionDialog, setShowCompletionDialog] = useState(false)
   const [draggedPieceId, setDraggedPieceId] = useState<string | null>(null)
+  const [isSolving, setIsSolving] = useState(false)
+  const [solvingProgress, setSolvingProgress] = useState(0)
   const dragStartPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
   const lastDragPosition = useRef<{ x: number; y: number } | null>(null)
+  const solveAbortRef = useRef(false)
 
   useEffect(() => {
     const handleResize = () => {
@@ -195,6 +198,130 @@ function App() {
     lastDragPosition.current = null
   }, [setPieces, setIsComplete])
 
+  const handleAISolve = useCallback(async () => {
+    if (!pieces || pieces.length === 0) return
+    
+    setIsSolving(true)
+    setSolvingProgress(0)
+    solveAbortRef.current = false
+    
+    try {
+      const gridSizeVal = gridSize
+      const piecesLength = pieces.length
+      const maxSteps = Math.min(piecesLength, 20)
+      
+      const promptText = `You are an AI puzzle solver. Given a jigsaw puzzle with ${piecesLength} pieces in a ${gridSizeVal}x${gridSizeVal} grid, create a strategic solving plan.
+
+Current puzzle state:
+- Total pieces: ${piecesLength}
+- Grid size: ${gridSizeVal}x${gridSizeVal}
+- Some pieces may already be connected in groups
+
+Generate a step-by-step solving strategy. Return a JSON object with a single property "steps" containing an array of move instructions. Each step should connect unconnected pieces or groups together, prioritizing:
+1. Corner pieces first
+2. Edge pieces next
+3. Then interior pieces
+4. Try to build from already connected groups
+
+Format:
+{
+  "steps": [
+    {"pieceId": "row-col", "reasoning": "brief reason for this move"},
+    ...more steps
+  ]
+}
+
+Generate exactly ${maxSteps} strategic steps.`
+
+      const result = await window.spark.llm(promptText, 'gpt-4o-mini', true)
+      const strategy = JSON.parse(result)
+      
+      if (!strategy.steps || !Array.isArray(strategy.steps)) {
+        throw new Error('Invalid strategy format')
+      }
+
+      toast.success('AI analyzing puzzle...', { duration: 2000 })
+      
+      for (let i = 0; i < strategy.steps.length; i++) {
+        if (solveAbortRef.current) {
+          toast.info('AI solve stopped')
+          break
+        }
+
+        const step = strategy.steps[i]
+        setSolvingProgress(((i + 1) / strategy.steps.length) * 100)
+        
+        await new Promise(resolve => setTimeout(resolve, 800))
+        
+        setPieces((currentPieces) => {
+          if (!currentPieces) return []
+          
+          const targetPiece = currentPieces.find(p => p.id === step.pieceId)
+          if (!targetPiece) return currentPieces
+          
+          let updatedPieces = [...currentPieces]
+          
+          for (const otherPiece of updatedPieces) {
+            if (otherPiece.id === targetPiece.id) continue
+            if (targetPiece.connectedGroup.includes(otherPiece.id)) continue
+            if (otherPiece.connectedGroup.includes(targetPiece.id)) continue
+            
+            const rowDiff = Math.abs(targetPiece.row - otherPiece.row)
+            const colDiff = Math.abs(targetPiece.col - otherPiece.col)
+            
+            if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
+              const targetX = otherPiece.currentPosition.x + (targetPiece.correctPosition.x - otherPiece.correctPosition.x)
+              const targetY = otherPiece.currentPosition.y + (targetPiece.correctPosition.y - otherPiece.correctPosition.y)
+              
+              updatedPieces = updatedPieces.map(p => {
+                if (targetPiece.connectedGroup.includes(p.id)) {
+                  const offsetX = p.correctPosition.x - targetPiece.correctPosition.x
+                  const offsetY = p.correctPosition.y - targetPiece.correctPosition.y
+                  return {
+                    ...p,
+                    currentPosition: {
+                      x: targetX + offsetX,
+                      y: targetY + offsetY
+                    }
+                  }
+                }
+                return p
+              })
+              
+              updatedPieces = mergeGroups(updatedPieces, targetPiece.id, otherPiece.id)
+              toast.success(`Connected ${step.pieceId}!`, { duration: 1000 })
+              break
+            }
+          }
+          
+          if (checkCompletion(updatedPieces)) {
+            setIsComplete(true)
+            setShowCompletionDialog(true)
+            return updatedPieces
+          }
+          
+          return updatedPieces
+        })
+      }
+      
+      if (!solveAbortRef.current) {
+        toast.success('AI solving complete!', { duration: 2000 })
+      }
+    } catch (error) {
+      console.error('AI solve error:', error)
+      toast.error('AI solver encountered an error')
+    } finally {
+      setIsSolving(false)
+      setSolvingProgress(0)
+    }
+  }, [pieces, gridSize, setPieces, setIsComplete])
+
+  const handleStopSolve = useCallback(() => {
+    solveAbortRef.current = true
+    setIsSolving(false)
+    setSolvingProgress(0)
+  }, [])
+
   const completionPercentage = pieces && pieces.length > 0 
     ? Math.round((pieces.filter(p => p.isConnected).length / pieces.length) * 100)
     : 0
@@ -234,6 +361,7 @@ function App() {
                 onDragEnd={handleDragEnd}
                 gridSize={gridSize}
                 imageUrl={DEFAULT_IMAGE}
+                disabled={isSolving}
               />
             ))}
           </div>
@@ -246,13 +374,39 @@ function App() {
               <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
             </div>
             <Progress value={completionPercentage} className="h-2" />
+            {isSolving && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-muted-foreground">AI Solving</span>
+                <span className="text-xs text-accent font-medium">{Math.round(solvingProgress)}%</span>
+              </div>
+            )}
           </div>
           
           <div className="flex gap-3">
+            {isSolving ? (
+              <Button
+                onClick={handleStopSolve}
+                variant="destructive"
+                className="gap-2"
+              >
+                <Sparkle size={18} weight="fill" />
+                Stop AI
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAISolve}
+                variant="default"
+                className="gap-2 bg-accent hover:bg-accent/90"
+              >
+                <Sparkle size={18} weight="fill" />
+                AI Solve
+              </Button>
+            )}
             <Button
               onClick={handleShuffle}
               variant="outline"
               className="gap-2"
+              disabled={isSolving}
             >
               <ArrowsClockwise size={18} />
               Shuffle
@@ -261,6 +415,7 @@ function App() {
               onClick={handleReset}
               variant="outline"
               className="gap-2"
+              disabled={isSolving}
             >
               <ArrowCounterClockwise size={18} />
               Reset

@@ -9,9 +9,10 @@ interface PuzzlePieceProps {
   onDragEnd: (id: string) => void
   gridSize: number
   imageUrl: string
+  disabled?: boolean
 }
 
-export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, imageUrl }: PuzzlePieceProps) {
+export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, imageUrl, disabled = false }: PuzzlePieceProps) {
   const hasTopTab = piece.row > 0 && piece.col % 2 === piece.row % 2
   const hasBottomTab = piece.row < gridSize - 1 && piece.col % 2 !== piece.row % 2
   const hasLeftTab = piece.col > 0 && (piece.col + piece.row) % 2 === 0
@@ -54,7 +55,7 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
 
   return (
     <motion.div
-      drag
+      drag={!disabled}
       dragMomentum={false}
       onDragStart={() => onDragStart(piece.id)}
       onDrag={(_, info) => {
@@ -68,10 +69,10 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
         position: 'absolute',
         width: PIECE_SIZE + tabSize * 2,
         height: PIECE_SIZE + tabSize * 2,
-        cursor: 'grab'
+        cursor: disabled ? 'default' : 'grab'
       }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 1.05, cursor: 'grabbing' }}
+      whileHover={disabled ? {} : { scale: 1.02 }}
+      whileTap={disabled ? {} : { scale: 1.05, cursor: 'grabbing' }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}

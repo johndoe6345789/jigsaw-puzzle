@@ -40,6 +40,13 @@ This is a focused interactive tool with drag-and-drop functionality, collision d
 - **Progression**: Select piece → detect connected pieces → move entire group together → snap check for whole group
 - **Success criteria**: All connected pieces move in unison, maintain relative positions
 
+### AI Solve
+- **Functionality**: AI automatically solves the puzzle piece by piece with visual feedback
+- **Purpose**: Demonstrates AI capability and provides entertainment value when user needs help
+- **Trigger**: Clicking the "AI Solve" button
+- **Progression**: Button click → AI analyzes puzzle state → generates solving strategy → moves pieces one at a time with delays → shows progress → completion or user stops
+- **Success criteria**: AI successfully connects adjacent pieces in a logical order, visual progress feedback, ability to stop mid-solve
+
 ## Edge Case Handling
 
 - **Overlapping pieces**: Clicking on overlapping pieces selects the topmost piece
@@ -47,6 +54,8 @@ This is a focused interactive tool with drag-and-drop functionality, collision d
 - **Already connected**: Prevent re-snapping of already connected pieces
 - **Edge pieces**: Handle pieces at puzzle boundaries that don't have neighbors on all sides
 - **Completed puzzle**: Detect when all pieces are connected and show completion state
+- **AI solve interruption**: Allow user to stop AI solving at any time and resume manual play
+- **Invalid piece IDs**: Handle cases where AI suggests invalid piece connections gracefully
 
 ## Design Direction
 
@@ -88,24 +97,28 @@ Animations should emphasize the physical, tactile nature of puzzle pieces with s
 
 - **Components**: 
   - Card for puzzle workspace with subtle shadow and rounded corners
-  - Button for controls (shuffle, reset) with hover states using Warm Sage
+  - Button for controls (shuffle, reset, AI solve) with hover states using Warm Sage
   - Dialog for completion celebration with backdrop blur
   - Progress indicator showing percentage complete
+  - Secondary progress indicator for AI solving status
   
 - **Customizations**: 
   - Custom SVG puzzle pieces with proper interlocking paths
   - Custom drag-and-drop system using Framer Motion for smooth physics
   - Custom snap detection using distance calculations
+  - AI solve button with sparkle icon and accent color styling
   
 - **States**: 
-  - Puzzle pieces: idle (default shadow), grabbed (lifted with larger shadow), snapped (locked position)
-  - Buttons: default (Warm Sage), hover (darker sage), active (pressed inset)
+  - Puzzle pieces: idle (default shadow), grabbed (lifted with larger shadow), snapped (locked position), locked (during AI solve)
+  - Buttons: default (Warm Sage), hover (darker sage), active (pressed inset), disabled (during AI solve)
+  - AI Solve button: idle (accent color), active (solving with progress), stop (destructive variant)
   - Completion dialog: hidden, visible with backdrop
   
 - **Icon Selection**: 
   - Shuffle (ArrowsClockwise) for randomizing pieces
   - ArrowCounterClockwise for reset
   - CheckCircle for completion indicator
+  - Sparkle for AI solve feature
   
 - **Spacing**: 
   - Puzzle workspace: p-8 for breathing room around pieces
