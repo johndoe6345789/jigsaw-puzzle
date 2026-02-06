@@ -333,7 +333,7 @@ Generate exactly ${maxSteps} strategic steps.`
         return currentPieces
       }
       
-      toast.success('Piece disconnected!', { duration: 1000 })
+      toast.success('Piece disconnected! Wait 2 seconds before reconnecting.', { duration: 2000 })
       return disconnectPiece(currentPieces, id)
     })
   }, [setPieces])

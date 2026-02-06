@@ -20,6 +20,7 @@ export interface PuzzlePiece {
   connectedGroup: string[]
   zIndex: number
   edges: EdgeType
+  lastDisconnectedTime?: number
 }
 
 export interface PuzzleState {

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { PuzzlePiece as PuzzlePieceType } from '@/lib/types'
-import { PIECE_SIZE } from '@/lib/puzzle-utils'
+import { PIECE_SIZE, SNAP_COOLDOWN_MS } from '@/lib/puzzle-utils'
 
 interface PuzzlePieceProps {
   piece: PuzzlePieceType
@@ -142,6 +143,30 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, onDoubleCli
   const tabDepth = PIECE_SIZE * 0.15
   const pathD = generateJigsawPath(piece)
   
+  const [isInCooldown, setIsInCooldown] = useState(false)
+  
+  useEffect(() => {
+    if (piece.lastDisconnectedTime) {
+      const now = Date.now()
+      const timeSinceDisconnect = now - piece.lastDisconnectedTime
+      
+      if (timeSinceDisconnect < SNAP_COOLDOWN_MS) {
+        setIsInCooldown(true)
+        const remainingTime = SNAP_COOLDOWN_MS - timeSinceDisconnect
+        
+        const timer = setTimeout(() => {
+          setIsInCooldown(false)
+        }, remainingTime)
+        
+        return () => clearTimeout(timer)
+      } else {
+        setIsInCooldown(false)
+      }
+    } else {
+      setIsInCooldown(false)
+    }
+  }, [piece.lastDisconnectedTime])
+  
   const backgroundPositionX = -piece.col * PIECE_SIZE
   const backgroundPositionY = -piece.row * PIECE_SIZE
   
@@ -201,8 +226,8 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, onDoubleCli
         <path
           d={pathD}
           fill={`url(#image-${piece.id})`}
-          stroke="rgba(0,0,0,0.2)"
-          strokeWidth="1"
+          stroke={isInCooldown ? "oklch(0.55 0.15 45)" : "rgba(0,0,0,0.2)"}
+          strokeWidth={isInCooldown ? "2.5" : "1"}
           clipPath={`url(#clip-${piece.id})`}
         />
       </svg>

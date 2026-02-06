@@ -2,6 +2,7 @@ import { PuzzlePiece, Position, EdgeType } from './types'
 
 export const SNAP_THRESHOLD = 30
 export const PIECE_SIZE = 100
+export const SNAP_COOLDOWN_MS = 2000
 
 export function getDistance(pos1: Position, pos2: Position): number {
   return Math.sqrt(Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2))
@@ -40,6 +41,11 @@ export function edgesMatch(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
 
 export function shouldSnap(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
   if (!areAdjacent(piece1, piece2)) return false
+  
+  const now = Date.now()
+  if (piece1.lastDisconnectedTime && (now - piece1.lastDisconnectedTime) < SNAP_COOLDOWN_MS) {
+    return false
+  }
   
   const sides = getAdjacentSide(piece1, piece2)
   if (!sides) return false
@@ -189,13 +195,15 @@ export function disconnectPiece(pieces: PuzzlePiece[], pieceId: string): PuzzleP
   
   const newGroup = [pieceId]
   const remainingGroup = oldGroup.filter(id => id !== pieceId)
+  const disconnectTime = Date.now()
   
   return pieces.map(p => {
     if (p.id === pieceId) {
       return {
         ...p,
         connectedGroup: newGroup,
-        isConnected: false
+        isConnected: false,
+        lastDisconnectedTime: disconnectTime
       }
     }
     if (oldGroup.includes(p.id)) {
