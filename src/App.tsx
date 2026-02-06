@@ -17,6 +17,7 @@ import {
   snapPieceToPosition,
   disconnectPiece,
   repelOverlappingPieces,
+  shufflePuzzle,
   PIECE_SIZE
 } from '@/lib/puzzle-utils'
 import { toast } from 'sonner'
@@ -78,17 +79,7 @@ function App() {
   const handleShuffle = useCallback(() => {
     setPieces((currentPieces) => {
       if (!currentPieces || currentPieces.length === 0) return []
-      
-      return currentPieces.map(piece => ({
-        ...piece,
-        currentPosition: {
-          x: Math.random() * (containerWidth - PIECE_SIZE - 100) + 50,
-          y: Math.random() * 400 + 100
-        },
-        isConnected: false,
-        connectedGroup: [piece.id],
-        zIndex: 1
-      }))
+      return shufflePuzzle(currentPieces, containerWidth)
     })
     setIsComplete(false)
     toast.success('Puzzle shuffled!')

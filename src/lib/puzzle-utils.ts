@@ -77,6 +77,44 @@ export function shouldSnap(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
   return offsetDiff < SNAP_THRESHOLD
 }
 
+function findNonOverlappingPosition(
+  existingPieces: PuzzlePiece[], 
+  containerWidth: number,
+  maxAttempts = 50
+): Position {
+  const MIN_DISTANCE = PIECE_SIZE + 15
+  const minX = 50
+  const maxX = containerWidth - PIECE_SIZE - 50
+  const minY = 100
+  const maxY = 600
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const candidateX = Math.random() * (maxX - minX) + minX
+    const candidateY = Math.random() * (maxY - minY) + minY
+    
+    let hasOverlap = false
+    for (const piece of existingPieces) {
+      const dx = Math.abs(candidateX - piece.currentPosition.x)
+      const dy = Math.abs(candidateY - piece.currentPosition.y)
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      
+      if (distance < MIN_DISTANCE) {
+        hasOverlap = true
+        break
+      }
+    }
+    
+    if (!hasOverlap) {
+      return { x: candidateX, y: candidateY }
+    }
+  }
+  
+  return { 
+    x: Math.random() * (maxX - minX) + minX, 
+    y: Math.random() * (maxY - minY) + minY 
+  }
+}
+
 export function initializePuzzle(gridSize: number, containerWidth: number): PuzzlePiece[] {
   const pieces: PuzzlePiece[] = []
   const pieceSize = PIECE_SIZE
@@ -105,8 +143,7 @@ export function initializePuzzle(gridSize: number, containerWidth: number): Puzz
       const correctX = startX + col * pieceSize
       const correctY = startY + row * pieceSize
       
-      const randomX = Math.random() * (containerWidth - pieceSize - 100) + 50
-      const randomY = Math.random() * 400 + 100
+      const randomPos = findNonOverlappingPosition(pieces, containerWidth)
       
       const topEdge = row === 0 ? 'flat' : (edgeMatrix[row][col] === 'tab' ? 'blank' : 'tab')
       const bottomEdge = row === gridSize - 1 ? 'flat' : edgeMatrix[row + 1][col]
@@ -118,7 +155,7 @@ export function initializePuzzle(gridSize: number, containerWidth: number): Puzz
         row,
         col,
         correctPosition: { x: correctX, y: correctY },
-        currentPosition: { x: randomX, y: randomY },
+        currentPosition: randomPos,
         isConnected: false,
         connectedGroup: [`${row}-${col}`],
         zIndex: 1,
@@ -311,4 +348,22 @@ export function repelOverlappingPieces(
   }
   
   return updatedPieces
+}
+
+export function shufflePuzzle(pieces: PuzzlePiece[], containerWidth: number): PuzzlePiece[] {
+  const shuffledPieces: PuzzlePiece[] = []
+  
+  for (const piece of pieces) {
+    const newPos = findNonOverlappingPosition(shuffledPieces, containerWidth)
+    
+    shuffledPieces.push({
+      ...piece,
+      currentPosition: newPos,
+      isConnected: false,
+      connectedGroup: [piece.id],
+      zIndex: 1
+    })
+  }
+  
+  return shuffledPieces
 }
