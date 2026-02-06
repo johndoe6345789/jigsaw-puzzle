@@ -151,20 +151,61 @@ export function mergeGroups(pieces: PuzzlePiece[], piece1Id: string, piece2Id: s
   })
 }
 
+function checkGroupCollision(
+  pieces: PuzzlePiece[], 
+  groupIds: string[], 
+  newPositions: Map<string, Position>
+): boolean {
+  const COLLISION_PADDING = 5
+  
+  for (const groupId of groupIds) {
+    const newPos = newPositions.get(groupId)
+    if (!newPos) continue
+    
+    for (const otherPiece of pieces) {
+      if (groupIds.includes(otherPiece.id)) continue
+      
+      const otherPos = otherPiece.currentPosition
+      
+      const dx = Math.abs(newPos.x - otherPos.x)
+      const dy = Math.abs(newPos.y - otherPos.y)
+      
+      if (dx < PIECE_SIZE - COLLISION_PADDING && dy < PIECE_SIZE - COLLISION_PADDING) {
+        return true
+      }
+    }
+  }
+  
+  return false
+}
+
 export function moveGroup(pieces: PuzzlePiece[], draggedPieceId: string, deltaX: number, deltaY: number): PuzzlePiece[] {
   const draggedPiece = pieces.find(p => p.id === draggedPieceId)
   if (!draggedPiece) return pieces
   
   const groupIds = draggedPiece.connectedGroup
   
+  const newPositions = new Map<string, Position>()
+  for (const id of groupIds) {
+    const piece = pieces.find(p => p.id === id)
+    if (piece) {
+      newPositions.set(id, {
+        x: piece.currentPosition.x + deltaX,
+        y: piece.currentPosition.y + deltaY
+      })
+    }
+  }
+  
+  if (checkGroupCollision(pieces, groupIds, newPositions)) {
+    return pieces
+  }
+  
   return pieces.map(p => {
     if (groupIds.includes(p.id)) {
+      const newPos = newPositions.get(p.id)
       return {
         ...p,
-        currentPosition: {
-          x: p.currentPosition.x + deltaX,
-          y: p.currentPosition.y + deltaY
-        }
+        currentPosition: newPos || p.currentPosition
       }
     }
     return p
