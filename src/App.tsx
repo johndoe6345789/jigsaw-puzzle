@@ -16,6 +16,7 @@ import {
   checkCompletion,
   snapPieceToPosition,
   disconnectPiece,
+  repelOverlappingPieces,
   PIECE_SIZE
 } from '@/lib/puzzle-utils'
 import { toast } from 'sonner'
@@ -150,6 +151,8 @@ function App() {
       
       if (!draggedPiece) return currentPieces
 
+      let snappedToSomething = false
+
       for (const piece of updatedPieces) {
         if (piece.id === id || draggedPiece.connectedGroup.includes(piece.id)) continue
         if (piece.connectedGroup.includes(id)) continue
@@ -182,9 +185,15 @@ function App() {
           }
 
           updatedPieces = mergeGroups(updatedPieces, id, piece.id)
+          snappedToSomething = true
           toast.success('Pieces connected!', { duration: 1000 })
           break
         }
+      }
+
+      if (!snappedToSomething) {
+        const movedGroupIds = draggedPiece.connectedGroup
+        updatedPieces = repelOverlappingPieces(updatedPieces, movedGroupIds, containerWidth)
       }
 
       if (checkCompletion(updatedPieces)) {
@@ -197,7 +206,7 @@ function App() {
 
     setDraggedPieceId(null)
     lastDragPosition.current = null
-  }, [setPieces, setIsComplete])
+  }, [setPieces, setIsComplete, containerWidth])
 
   const handleAISolve = useCallback(async () => {
     if (!pieces || pieces.length === 0) return

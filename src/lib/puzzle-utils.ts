@@ -257,3 +257,58 @@ export function disconnectPiece(pieces: PuzzlePiece[], pieceId: string): PuzzleP
     return p
   })
 }
+
+export function repelOverlappingPieces(
+  pieces: PuzzlePiece[], 
+  droppedGroupIds: string[],
+  containerWidth: number
+): PuzzlePiece[] {
+  const REPEL_DISTANCE = PIECE_SIZE + 20
+  const OVERLAP_THRESHOLD = PIECE_SIZE - 10
+  
+  let updatedPieces = [...pieces]
+  const movedGroups = new Set<string>()
+  
+  for (const droppedId of droppedGroupIds) {
+    const droppedPiece = updatedPieces.find(p => p.id === droppedId)
+    if (!droppedPiece) continue
+    
+    for (const otherPiece of updatedPieces) {
+      if (droppedGroupIds.includes(otherPiece.id)) continue
+      if (movedGroups.has(otherPiece.connectedGroup[0])) continue
+      
+      const dx = droppedPiece.currentPosition.x - otherPiece.currentPosition.x
+      const dy = droppedPiece.currentPosition.y - otherPiece.currentPosition.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      
+      if (distance < OVERLAP_THRESHOLD) {
+        const angle = Math.atan2(dy, dx)
+        const pushX = Math.cos(angle) * REPEL_DISTANCE
+        const pushY = Math.sin(angle) * REPEL_DISTANCE
+        
+        const targetX = droppedPiece.currentPosition.x - pushX
+        const targetY = droppedPiece.currentPosition.y - pushY
+        
+        movedGroups.add(otherPiece.connectedGroup[0])
+        
+        updatedPieces = updatedPieces.map(p => {
+          if (otherPiece.connectedGroup.includes(p.id)) {
+            const offsetX = p.currentPosition.x - otherPiece.currentPosition.x
+            const offsetY = p.currentPosition.y - otherPiece.currentPosition.y
+            
+            return {
+              ...p,
+              currentPosition: {
+                x: Math.max(20, Math.min(containerWidth - PIECE_SIZE - 20, targetX + offsetX)),
+                y: Math.max(20, targetY + offsetY)
+              }
+            }
+          }
+          return p
+        })
+      }
+    }
+  }
+  
+  return updatedPieces
+}
