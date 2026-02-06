@@ -20,18 +20,18 @@ This is a focused interactive tool with drag-and-drop functionality, collision d
 - **Success criteria**: Pieces move smoothly with cursor, no lag, piece stays under cursor during drag
 
 ### Snap-to-Connect
-- **Functionality**: When pieces are dragged close to their correct neighboring pieces, they snap together automatically
-- **Purpose**: Provides satisfying feedback and helps users connect pieces accurately
-- **Trigger**: Dragging a piece within snap threshold distance of a compatible adjacent piece
-- **Progression**: Piece approaches neighbor → distance check → snap animation → pieces lock together → move as unit
-- **Success criteria**: Snapping feels magnetic and satisfying, connected pieces move together as one unit
+- **Functionality**: When pieces are dragged close to their correct neighboring pieces with matching tab/blank edges, they snap together automatically
+- **Purpose**: Provides satisfying feedback and helps users connect pieces accurately, ensuring only valid connections are made
+- **Trigger**: Dragging a piece within snap threshold distance of a compatible adjacent piece with complementary edges
+- **Progression**: Piece approaches neighbor → adjacency check → edge compatibility check (tab matches blank) → distance check → snap animation → pieces lock together → move as unit
+- **Success criteria**: Only correctly adjacent pieces with matching edges snap together, no flat edges connect, snapping feels magnetic and satisfying, connected pieces move together as one unit
 
 ### Puzzle Generation
-- **Functionality**: Generate a puzzle from an image by dividing it into grid pieces
-- **Purpose**: Create the actual puzzle pieces with proper interlocking shapes
+- **Functionality**: Generate a puzzle from an image by dividing it into grid pieces with unique interlocking tab and blank connectors
+- **Purpose**: Create the actual puzzle pieces with proper interlocking shapes where each edge has either a tab, blank, or flat edge (borders only)
 - **Trigger**: App initialization
-- **Progression**: Load image → divide into grid → apply jigsaw cutouts → randomize positions → render pieces
-- **Success criteria**: Pieces have classic jigsaw shapes, properly tessellate when connected
+- **Progression**: Load image → divide into grid → assign complementary tab/blank edges ensuring tabs match with blanks → randomize positions → render pieces with proper jigsaw shapes
+- **Success criteria**: Each piece has unique edge configuration with tabs and blanks, pieces properly tessellate when connected, no two adjacent flat edges, edge pieces have flat borders
 
 ### Group Movement
 - **Functionality**: When pieces are connected, dragging one piece moves the entire connected group
@@ -52,10 +52,12 @@ This is a focused interactive tool with drag-and-drop functionality, collision d
 - **Overlapping pieces**: Clicking on overlapping pieces selects the topmost piece
 - **Rapid dragging**: Throttle snap detection to prevent performance issues with fast movements
 - **Already connected**: Prevent re-snapping of already connected pieces
-- **Edge pieces**: Handle pieces at puzzle boundaries that don't have neighbors on all sides
+- **Edge pieces**: Handle pieces at puzzle boundaries that have flat edges on borders only
 - **Completed puzzle**: Detect when all pieces are connected and show completion state
 - **AI solve interruption**: Allow user to stop AI solving at any time and resume manual play
 - **Invalid piece IDs**: Handle cases where AI suggests invalid piece connections gracefully
+- **Invalid snapping**: Prevent pieces from snapping if edges don't match (tab to tab, blank to blank, or any edge to flat)
+- **Non-adjacent pieces**: Only pieces that are grid neighbors can snap together, even if physically close
 
 ## Design Direction
 
@@ -103,9 +105,10 @@ Animations should emphasize the physical, tactile nature of puzzle pieces with s
   - Secondary progress indicator for AI solving status
   
 - **Customizations**: 
-  - Custom SVG puzzle pieces with proper interlocking paths
+  - Custom SVG puzzle pieces with proper interlocking paths using quadratic bezier curves
+  - Unique tab and blank connectors generated per piece with complementary edges
   - Custom drag-and-drop system using Framer Motion for smooth physics
-  - Custom snap detection using distance calculations
+  - Custom snap detection using distance calculations and edge compatibility checks
   - AI solve button with sparkle icon and accent color styling
   
 - **States**: 

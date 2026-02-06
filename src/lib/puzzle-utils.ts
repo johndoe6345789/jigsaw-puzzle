@@ -1,4 +1,4 @@
-import { PuzzlePiece, Position } from './types'
+import { PuzzlePiece, Position, EdgeType } from './types'
 
 export const SNAP_THRESHOLD = 30
 export const PIECE_SIZE = 100
@@ -8,19 +8,56 @@ export function getDistance(pos1: Position, pos2: Position): number {
 }
 
 export function areAdjacent(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
-  const rowDiff = Math.abs(piece1.row - piece2.row)
-  const colDiff = Math.abs(piece1.col - piece2.col)
+  const rowDiff = piece1.row - piece2.row
+  const colDiff = piece1.col - piece2.col
   
-  return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)
+  return (Math.abs(rowDiff) === 1 && colDiff === 0) || (Math.abs(colDiff) === 1 && rowDiff === 0)
+}
+
+export function getAdjacentSide(piece1: PuzzlePiece, piece2: PuzzlePiece): { side1: keyof EdgeType, side2: keyof EdgeType } | null {
+  const rowDiff = piece1.row - piece2.row
+  const colDiff = piece1.col - piece2.col
+  
+  if (rowDiff === -1 && colDiff === 0) return { side1: 'bottom', side2: 'top' }
+  if (rowDiff === 1 && colDiff === 0) return { side1: 'top', side2: 'bottom' }
+  if (colDiff === -1 && rowDiff === 0) return { side1: 'right', side2: 'left' }
+  if (colDiff === 1 && rowDiff === 0) return { side1: 'left', side2: 'right' }
+  
+  return null
+}
+
+export function edgesMatch(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
+  const sides = getAdjacentSide(piece1, piece2)
+  if (!sides) return false
+  
+  const edge1 = piece1.edges[sides.side1]
+  const edge2 = piece2.edges[sides.side2]
+  
+  if (edge1 === 'flat' || edge2 === 'flat') return false
+  
+  return (edge1 === 'tab' && edge2 === 'blank') || (edge1 === 'blank' && edge2 === 'tab')
 }
 
 export function shouldSnap(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
   if (!areAdjacent(piece1, piece2)) return false
+  if (!edgesMatch(piece1, piece2)) return false
   
-  const distance = getDistance(piece1.currentPosition, piece2.currentPosition)
-  const correctDistance = getDistance(piece1.correctPosition, piece2.correctPosition)
+  const expectedOffset = {
+    x: (piece2.col - piece1.col) * PIECE_SIZE,
+    y: (piece2.row - piece1.row) * PIECE_SIZE
+  }
   
-  return distance < SNAP_THRESHOLD && Math.abs(distance - correctDistance) < SNAP_THRESHOLD
+  const actualOffset = {
+    x: piece2.currentPosition.x - piece1.currentPosition.x,
+    y: piece2.currentPosition.y - piece1.currentPosition.y
+  }
+  
+  const offsetDiff = Math.sqrt(
+    Math.pow(actualOffset.x - expectedOffset.x, 2) + 
+    Math.pow(actualOffset.y - expectedOffset.y, 2)
+  )
+  
+  return offsetDiff < SNAP_THRESHOLD
 }
 
 export function initializePuzzle(gridSize: number, containerWidth: number): PuzzlePiece[] {
@@ -30,6 +67,22 @@ export function initializePuzzle(gridSize: number, containerWidth: number): Puzz
   const startX = (containerWidth - puzzleWidth) / 2
   const startY = 50
   
+  const edgeMatrix: ('tab' | 'blank')[][] = []
+  for (let i = 0; i < gridSize + 1; i++) {
+    edgeMatrix[i] = []
+    for (let j = 0; j < gridSize; j++) {
+      edgeMatrix[i][j] = Math.random() > 0.5 ? 'tab' : 'blank'
+    }
+  }
+  
+  const verticalEdgeMatrix: ('tab' | 'blank')[][] = []
+  for (let i = 0; i < gridSize; i++) {
+    verticalEdgeMatrix[i] = []
+    for (let j = 0; j < gridSize + 1; j++) {
+      verticalEdgeMatrix[i][j] = Math.random() > 0.5 ? 'tab' : 'blank'
+    }
+  }
+  
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
       const correctX = startX + col * pieceSize
@@ -37,6 +90,11 @@ export function initializePuzzle(gridSize: number, containerWidth: number): Puzz
       
       const randomX = Math.random() * (containerWidth - pieceSize - 100) + 50
       const randomY = Math.random() * 400 + 100
+      
+      const topEdge = row === 0 ? 'flat' : (edgeMatrix[row][col] === 'tab' ? 'blank' : 'tab')
+      const bottomEdge = row === gridSize - 1 ? 'flat' : edgeMatrix[row + 1][col]
+      const leftEdge = col === 0 ? 'flat' : (verticalEdgeMatrix[row][col] === 'tab' ? 'blank' : 'tab')
+      const rightEdge = col === gridSize - 1 ? 'flat' : verticalEdgeMatrix[row][col + 1]
       
       pieces.push({
         id: `${row}-${col}`,
@@ -46,7 +104,13 @@ export function initializePuzzle(gridSize: number, containerWidth: number): Puzz
         currentPosition: { x: randomX, y: randomY },
         isConnected: false,
         connectedGroup: [`${row}-${col}`],
-        zIndex: 1
+        zIndex: 1,
+        edges: {
+          top: topEdge,
+          right: rightEdge,
+          bottom: bottomEdge,
+          left: leftEdge
+        }
       })
     }
   }

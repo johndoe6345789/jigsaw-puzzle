@@ -12,46 +12,140 @@ interface PuzzlePieceProps {
   disabled?: boolean
 }
 
+function generateJigsawPath(piece: PuzzlePieceType): string {
+  const size = PIECE_SIZE
+  const tabDepth = size * 0.15
+  const tabWidth = size * 0.35
+  const neckWidth = size * 0.25
+  
+  let path = ''
+  
+  path += `M 0,0 `
+  
+  if (piece.edges.top === 'tab') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${neckStart},0 `
+    path += `Q ${neckStart},-${tabDepth * 0.3} ${start},-${tabDepth * 0.5} `
+    path += `Q ${mid - tabWidth * 0.2},-${tabDepth} ${mid},-${tabDepth} `
+    path += `Q ${mid + tabWidth * 0.2},-${tabDepth} ${end},-${tabDepth * 0.5} `
+    path += `Q ${neckEnd},-${tabDepth * 0.3} ${neckEnd},0 `
+  } else if (piece.edges.top === 'blank') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${neckStart},0 `
+    path += `Q ${neckStart},${tabDepth * 0.3} ${start},${tabDepth * 0.5} `
+    path += `Q ${mid - tabWidth * 0.2},${tabDepth} ${mid},${tabDepth} `
+    path += `Q ${mid + tabWidth * 0.2},${tabDepth} ${end},${tabDepth * 0.5} `
+    path += `Q ${neckEnd},${tabDepth * 0.3} ${neckEnd},0 `
+  }
+  
+  path += `L ${size},0 `
+  
+  if (piece.edges.right === 'tab') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${size},${neckStart} `
+    path += `Q ${size + tabDepth * 0.3},${neckStart} ${size + tabDepth * 0.5},${start} `
+    path += `Q ${size + tabDepth},${mid - tabWidth * 0.2} ${size + tabDepth},${mid} `
+    path += `Q ${size + tabDepth},${mid + tabWidth * 0.2} ${size + tabDepth * 0.5},${end} `
+    path += `Q ${size + tabDepth * 0.3},${neckEnd} ${size},${neckEnd} `
+  } else if (piece.edges.right === 'blank') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${size},${neckStart} `
+    path += `Q ${size - tabDepth * 0.3},${neckStart} ${size - tabDepth * 0.5},${start} `
+    path += `Q ${size - tabDepth},${mid - tabWidth * 0.2} ${size - tabDepth},${mid} `
+    path += `Q ${size - tabDepth},${mid + tabWidth * 0.2} ${size - tabDepth * 0.5},${end} `
+    path += `Q ${size - tabDepth * 0.3},${neckEnd} ${size},${neckEnd} `
+  }
+  
+  path += `L ${size},${size} `
+  
+  if (piece.edges.bottom === 'tab') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${neckEnd},${size} `
+    path += `Q ${neckEnd},${size + tabDepth * 0.3} ${end},${size + tabDepth * 0.5} `
+    path += `Q ${mid + tabWidth * 0.2},${size + tabDepth} ${mid},${size + tabDepth} `
+    path += `Q ${mid - tabWidth * 0.2},${size + tabDepth} ${start},${size + tabDepth * 0.5} `
+    path += `Q ${neckStart},${size + tabDepth * 0.3} ${neckStart},${size} `
+  } else if (piece.edges.bottom === 'blank') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L ${neckEnd},${size} `
+    path += `Q ${neckEnd},${size - tabDepth * 0.3} ${end},${size - tabDepth * 0.5} `
+    path += `Q ${mid + tabWidth * 0.2},${size - tabDepth} ${mid},${size - tabDepth} `
+    path += `Q ${mid - tabWidth * 0.2},${size - tabDepth} ${start},${size - tabDepth * 0.5} `
+    path += `Q ${neckStart},${size - tabDepth * 0.3} ${neckStart},${size} `
+  }
+  
+  path += `L 0,${size} `
+  
+  if (piece.edges.left === 'tab') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L 0,${neckEnd} `
+    path += `Q -${tabDepth * 0.3},${neckEnd} -${tabDepth * 0.5},${end} `
+    path += `Q -${tabDepth},${mid + tabWidth * 0.2} -${tabDepth},${mid} `
+    path += `Q -${tabDepth},${mid - tabWidth * 0.2} -${tabDepth * 0.5},${start} `
+    path += `Q -${tabDepth * 0.3},${neckStart} 0,${neckStart} `
+  } else if (piece.edges.left === 'blank') {
+    const start = (size - tabWidth) / 2
+    const mid = size / 2
+    const end = start + tabWidth
+    const neckStart = (size - neckWidth) / 2
+    const neckEnd = neckStart + neckWidth
+    
+    path += `L 0,${neckEnd} `
+    path += `Q ${tabDepth * 0.3},${neckEnd} ${tabDepth * 0.5},${end} `
+    path += `Q ${tabDepth},${mid + tabWidth * 0.2} ${tabDepth},${mid} `
+    path += `Q ${tabDepth},${mid - tabWidth * 0.2} ${tabDepth * 0.5},${start} `
+    path += `Q ${tabDepth * 0.3},${neckStart} 0,${neckStart} `
+  }
+  
+  path += `Z`
+  
+  return path
+}
+
 export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, imageUrl, disabled = false }: PuzzlePieceProps) {
-  const hasTopTab = piece.row > 0 && piece.col % 2 === piece.row % 2
-  const hasBottomTab = piece.row < gridSize - 1 && piece.col % 2 !== piece.row % 2
-  const hasLeftTab = piece.col > 0 && (piece.col + piece.row) % 2 === 0
-  const hasRightTab = piece.col < gridSize - 1 && (piece.col + piece.row) % 2 === 1
-
-  const tabSize = PIECE_SIZE * 0.2
-
-  let pathD = `M 0,0 `
-
-  if (hasTopTab) {
-    pathD += `L ${PIECE_SIZE * 0.3},0 
-              Q ${PIECE_SIZE * 0.4},-${tabSize} ${PIECE_SIZE * 0.5},-${tabSize} 
-              Q ${PIECE_SIZE * 0.6},-${tabSize} ${PIECE_SIZE * 0.7},0 `
-  }
-  pathD += `L ${PIECE_SIZE},0 `
-
-  if (hasRightTab) {
-    pathD += `L ${PIECE_SIZE},${PIECE_SIZE * 0.3} 
-              Q ${PIECE_SIZE + tabSize},${PIECE_SIZE * 0.4} ${PIECE_SIZE + tabSize},${PIECE_SIZE * 0.5} 
-              Q ${PIECE_SIZE + tabSize},${PIECE_SIZE * 0.6} ${PIECE_SIZE},${PIECE_SIZE * 0.7} `
-  }
-  pathD += `L ${PIECE_SIZE},${PIECE_SIZE} `
-
-  if (hasBottomTab) {
-    pathD += `L ${PIECE_SIZE * 0.7},${PIECE_SIZE} 
-              Q ${PIECE_SIZE * 0.6},${PIECE_SIZE + tabSize} ${PIECE_SIZE * 0.5},${PIECE_SIZE + tabSize} 
-              Q ${PIECE_SIZE * 0.4},${PIECE_SIZE + tabSize} ${PIECE_SIZE * 0.3},${PIECE_SIZE} `
-  }
-  pathD += `L 0,${PIECE_SIZE} `
-
-  if (hasLeftTab) {
-    pathD += `L 0,${PIECE_SIZE * 0.7} 
-              Q -${tabSize},${PIECE_SIZE * 0.6} -${tabSize},${PIECE_SIZE * 0.5} 
-              Q -${tabSize},${PIECE_SIZE * 0.4} 0,${PIECE_SIZE * 0.3} `
-  }
-  pathD += `Z`
-
+  const tabDepth = PIECE_SIZE * 0.15
+  const pathD = generateJigsawPath(piece)
+  
   const backgroundPositionX = -piece.col * PIECE_SIZE
   const backgroundPositionY = -piece.row * PIECE_SIZE
+  
+  const svgSize = PIECE_SIZE + tabDepth * 2
+  const viewBoxOffset = tabDepth
 
   return (
     <motion.div
@@ -67,8 +161,8 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
         y: piece.currentPosition.y,
         zIndex: piece.zIndex,
         position: 'absolute',
-        width: PIECE_SIZE + tabSize * 2,
-        height: PIECE_SIZE + tabSize * 2,
+        width: svgSize,
+        height: svgSize,
         cursor: disabled ? 'default' : 'grab'
       }}
       whileHover={disabled ? {} : { scale: 1.02 }}
@@ -78,16 +172,16 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
     >
       <svg
-        width={PIECE_SIZE + tabSize * 2}
-        height={PIECE_SIZE + tabSize * 2}
-        viewBox={`-${tabSize} -${tabSize} ${PIECE_SIZE + tabSize * 2} ${PIECE_SIZE + tabSize * 2}`}
+        width={svgSize}
+        height={svgSize}
+        viewBox={`-${viewBoxOffset} -${viewBoxOffset} ${svgSize} ${svgSize}`}
         style={{ filter: 'drop-shadow(2px 4px 8px rgba(0,0,0,0.15))' }}
       >
         <defs>
           <pattern
             id={`image-${piece.id}`}
-            x={backgroundPositionX - tabSize}
-            y={backgroundPositionY - tabSize}
+            x={backgroundPositionX - viewBoxOffset}
+            y={backgroundPositionY - viewBoxOffset}
             width={gridSize * PIECE_SIZE}
             height={gridSize * PIECE_SIZE}
             patternUnits="userSpaceOnUse"
@@ -105,7 +199,7 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
         <path
           d={pathD}
           fill={`url(#image-${piece.id})`}
-          stroke="rgba(0,0,0,0.1)"
+          stroke="rgba(0,0,0,0.2)"
           strokeWidth="1"
           clipPath={`url(#clip-${piece.id})`}
         />
