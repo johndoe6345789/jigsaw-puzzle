@@ -7,6 +7,7 @@ interface PuzzlePieceProps {
   onDragStart: (id: string) => void
   onDrag: (id: string, x: number, y: number) => void
   onDragEnd: (id: string) => void
+  onDoubleClick?: (id: string) => void
   gridSize: number
   imageUrl: string
   disabled?: boolean
@@ -137,7 +138,7 @@ function generateJigsawPath(piece: PuzzlePieceType): string {
   return path
 }
 
-export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, imageUrl, disabled = false }: PuzzlePieceProps) {
+export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, onDoubleClick, gridSize, imageUrl, disabled = false }: PuzzlePieceProps) {
   const tabDepth = PIECE_SIZE * 0.15
   const pathD = generateJigsawPath(piece)
   
@@ -156,6 +157,7 @@ export function PuzzlePiece({ piece, onDragStart, onDrag, onDragEnd, gridSize, i
         onDrag(piece.id, info.point.x, info.point.y)
       }}
       onDragEnd={() => onDragEnd(piece.id)}
+      onDoubleClick={() => onDoubleClick?.(piece.id)}
       style={{
         x: piece.currentPosition.x,
         y: piece.currentPosition.y,

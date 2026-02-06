@@ -15,6 +15,7 @@ import {
   moveGroup, 
   checkCompletion,
   snapPieceToPosition,
+  disconnectPiece,
   PIECE_SIZE
 } from '@/lib/puzzle-utils'
 import { toast } from 'sonner'
@@ -322,6 +323,21 @@ Generate exactly ${maxSteps} strategic steps.`
     setSolvingProgress(0)
   }, [])
 
+  const handleDoubleClick = useCallback((id: string) => {
+    setPieces((currentPieces) => {
+      if (!currentPieces) return []
+      const piece = currentPieces.find(p => p.id === id)
+      
+      if (!piece || piece.connectedGroup.length === 1) {
+        toast.info('This piece is not connected to any other pieces')
+        return currentPieces
+      }
+      
+      toast.success('Piece disconnected!', { duration: 1000 })
+      return disconnectPiece(currentPieces, id)
+    })
+  }, [setPieces])
+
   const completionPercentage = pieces && pieces.length > 0 
     ? Math.round((pieces.filter(p => p.isConnected).length / pieces.length) * 100)
     : 0
@@ -359,6 +375,7 @@ Generate exactly ${maxSteps} strategic steps.`
                 onDragStart={handleDragStart}
                 onDrag={handleDrag}
                 onDragEnd={handleDragEnd}
+                onDoubleClick={handleDoubleClick}
                 gridSize={gridSize}
                 imageUrl={DEFAULT_IMAGE}
                 disabled={isSolving}

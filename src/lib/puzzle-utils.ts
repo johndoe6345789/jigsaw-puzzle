@@ -40,7 +40,18 @@ export function edgesMatch(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
 
 export function shouldSnap(piece1: PuzzlePiece, piece2: PuzzlePiece): boolean {
   if (!areAdjacent(piece1, piece2)) return false
-  if (!edgesMatch(piece1, piece2)) return false
+  
+  const sides = getAdjacentSide(piece1, piece2)
+  if (!sides) return false
+  
+  const edge1 = piece1.edges[sides.side1]
+  const edge2 = piece2.edges[sides.side2]
+  
+  if (edge1 === 'flat' || edge2 === 'flat') return false
+  
+  if (!((edge1 === 'tab' && edge2 === 'blank') || (edge1 === 'blank' && edge2 === 'tab'))) {
+    return false
+  }
   
   const expectedOffset = {
     x: (piece2.col - piece1.col) * PIECE_SIZE,
@@ -166,4 +177,34 @@ export function snapPieceToPosition(piece: PuzzlePiece, targetPosition: Position
     ...piece,
     currentPosition: { ...targetPosition }
   }
+}
+
+export function disconnectPiece(pieces: PuzzlePiece[], pieceId: string): PuzzlePiece[] {
+  const piece = pieces.find(p => p.id === pieceId)
+  if (!piece) return pieces
+  
+  const oldGroup = piece.connectedGroup
+  
+  if (oldGroup.length === 1) return pieces
+  
+  const newGroup = [pieceId]
+  const remainingGroup = oldGroup.filter(id => id !== pieceId)
+  
+  return pieces.map(p => {
+    if (p.id === pieceId) {
+      return {
+        ...p,
+        connectedGroup: newGroup,
+        isConnected: false
+      }
+    }
+    if (oldGroup.includes(p.id)) {
+      return {
+        ...p,
+        connectedGroup: remainingGroup,
+        isConnected: remainingGroup.length > 1
+      }
+    }
+    return p
+  })
 }
